@@ -1,17 +1,23 @@
 package com.zhongyichen255.navegador;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.app.Activity;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -22,9 +28,11 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     private static final int READ_CODE = 1000;
+    private static final int PATH = 1001;
 
     private ListView listaRutas;
     private ArchivoAdapter adapter;
+    private Button btn;
     // Los caminos que hay en el fichero
     // 文件夹里的路径
     private List<String> rutas;
@@ -32,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
     // 是否允许读取外置储存
     private int permisoLeer;
 
-    private String archivoActual;
+    //private String archivoActual;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +55,8 @@ public class MainActivity extends AppCompatActivity {
             datos();
 
             asignar();
+
+            listener();
 
             crear();
         }
@@ -74,10 +84,13 @@ public class MainActivity extends AppCompatActivity {
         File [] archivos = archivo.listFiles();
 
         rutas = new ArrayList<>();
-        for(File fichero : archivos){
-            rutas.add(fichero.getPath());
+        if(archivos != null){
+            for(File fichero : archivos){
+                rutas.add(fichero.getPath());
+            }
+        }else{
+            Log.e("LOG_TAG", "no hay archivos dentro de "+archivo.getPath());
         }
-
         Log.i("ruta", "datos: "+ruta);
     }
 
@@ -85,6 +98,38 @@ public class MainActivity extends AppCompatActivity {
     // 定义组件
     private void asignar(){
         listaRutas = findViewById(R.id.lista_ruta);
+
+        btn = findViewById(R.id.button);
+    }
+
+    public void listener(){
+        ActivityResultLauncher<Intent> mStartForResult = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+                result -> { //new ActivityResultCallback<ActivityResult>() {
+                    if (result.getResultCode() == Activity.RESULT_OK) {
+                        Intent intent = result.getData();
+                        if(intent != null){
+                            String camino = intent.getData().getPath();
+                            Log.i("LOG_TAG", "camino: "+camino);
+                            Toast.makeText(MainActivity.this,camino,Toast.LENGTH_LONG).show();
+                        }else{
+                            Log.e("LOG_TAG", "error en el activity result en intent ");
+                        }
+
+                    }
+                });
+
+        btn.setOnClickListener(view -> {
+
+            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+            intent.setType("*/*");
+            intent = Intent.createChooser(intent,"Elige el archivo");
+            /* Deprecated startActivityForResult
+            startActivityForResult(intent,PATH);
+            */
+
+            mStartForResult.launch(intent);
+
+        });
     }
 
     // Definir el adaptor y asignar al Listview
@@ -96,12 +141,9 @@ public class MainActivity extends AppCompatActivity {
 
         listaRutas.setAdapter(adapter);
 
-        listaRutas.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                actualizarRutas(adapter.getItem(i).toString());
-                adapter.notifyDataSetChanged();
-            }
+        listaRutas.setOnItemClickListener((adapterView, view, i, l) -> {
+            actualizarRutas(adapter.getItem(i).toString());
+            adapter.notifyDataSetChanged();
         });
 
     }
@@ -120,15 +162,19 @@ public class MainActivity extends AppCompatActivity {
                 rutas.add(archivo.getParent());
             }
 
-            for(File fichero : archivos){
-                rutas.add(fichero.getPath());
+            if(archivos != null){
+                for(File fichero : archivos){
+                    rutas.add(fichero.getPath());
+                }
+            }else{
+                Log.e("LOG_TAG", "no hay archivos dentro de "+archivo.getPath());
             }
 
             adapter.setRutas(rutas);
         }else if(archivo.isFile()){
             Toast.makeText(this,"Direccion: "+archivo.getPath(),Toast.LENGTH_LONG).show();
         }else{
-            Log.i("lectura de archivo", "Archivo desconocido");
+            Log.i("LOG_TAG", "lectura de archivo desconocido");
         }
 
 
@@ -140,16 +186,48 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull @org.jetbrains.annotations.NotNull String[] permissions, @NonNull @org.jetbrains.annotations.NotNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
+        if (requestCode == READ_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.i("LOG_TAG", "permiso_leer aceptado");
+            } else {
+                Log.i("LOG_TAG", "permiso_leer denegado");
+            }
+        }
+        /*
         switch (requestCode){
             case READ_CODE:
                 if(grantResults.length>0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                    Log.i("permiso_leer", "aceptado");
+                    Log.i("LOG_TAG", "permiso_leer aceptado");
                 }else{
-                    Log.i("permiso_leer", "denegado");
+                    Log.i("LOG_TAG", "permiso_leer denegado");
                 }
                 break;
             default:
                 break;
         }
+         */
     }
+
+    /*
+    // Metodo onclick llamado desde xml
+    // 在xml里呼叫onclick方法
+    public void botonClick(View view) {
+
+    }
+     */
+    /* con startActivityForResult, 跟startActivityForResult
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable @org.jetbrains.annotations.Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        // switch(requestCode)
+        if(requestCode == PATH){
+            if(resultCode == Activity.RESULT_OK){
+                String camino = data.getData().getPath();
+                Log.i("LOG_TAG", "camino: "+camino);
+                Toast.makeText(MainActivity.this,camino,Toast.LENGTH_LONG).show();
+            }
+        }
+
+    }*/
 }

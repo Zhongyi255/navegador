@@ -6,11 +6,36 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <Button
+        android:id="@+id/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/select"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!--    Se puede crear onclick aqui o hacerlo en el elemento
+            可以在这里用点击后效果或在变量里定义点击效果
+        <Button
+        android:id="@+id/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/test"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:onClick="botonClick"/>
+        -->
+
     <ListView
         android:id="@+id/lista_ruta"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        tools:listitem="@layout/ruta_archivo"/>
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/button"
+        tools:listitem="@layout/ruta_archivo" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

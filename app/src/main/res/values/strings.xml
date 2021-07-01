@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Navegador</string>
     <string name="test">Prueba</string>
+    <string name="select">Seleccionar</string>
 </resources>
